@@ -1,31 +1,30 @@
 pipeline {
     agent any
 
-    environment {
+    environment { 
+        GIT_REPO_URL = 'https://github.com/enreap/Sample-web-app.git'
+        BRANCH_NAME  = 'main'
         VM_USER = "ubuntu"                // SSH username for your VM
         VM_HOST = "54.163.31.126"          // VM IP address
         WEB_DIR = "/var/www/html"       // Web server root directory (Nginx/Apache)
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                // Pull the latest code from GitHub
-                git branch: 'main', url: 'https://github.com/yourusername/sample-web-app.git'
+                echo "Cloning code from ${GIT_REPO_URL} (branch: ${BRANCH_NAME})"
+                git branch: "${BRANCH_NAME}", url: "${GIT_REPO_URL}"
             }
-        }
-
+        }    
         stage('Deploy to VM') {
             steps {
-                // Copy static files to the web server directory
-                sh """
-                scp -r * ${VM_USER}@${VM_HOST}:${WEB_DIR}
-                """
+                sshagent(['jenkins-ssh-ubuntu']) {   // replace with your credential ID
+                    sh """
+                        scp -o StrictHostKeyChecking=no -r * ${VM_USER}@${VM_HOST}:${WEB_DIR}
 
-                // Restart the web server so changes take effect
-                sh """
-                ssh ${VM_USER}@${VM_HOST} 'sudo systemctl restart nginx || sudo systemctl restart apache2'
-                """
+                        ssh -o StrictHostKeyChecking=no ${VM_USER}@${VM_HOST} 'sudo systemctl restart nginx || sudo systemctl restart apache2'
+                    """
+                }
             }
         }
     }
