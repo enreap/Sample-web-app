@@ -12,8 +12,8 @@ if [ ! -f "${SSH_KEY_PATH}.pub" ]; then
     exit 1
 fi
 
-# Copy key
-ssh-copy-id -i "${SSH_KEY_PATH}.pub" ${REMOTE_USER}@${REMOTE_HOST}
+# Copy key (disable host verification for first-time connection)
+ssh-copy-id -o StrictHostKeyChecking=no -i "${SSH_KEY_PATH}.pub" ${REMOTE_USER}@${REMOTE_HOST}
 
 # Check result
 if [ $? -ne 0 ]; then
